@@ -20,16 +20,19 @@
     <main class="container">
         <header class="app-header">
             <h1>WorkList <span class="subtitle">บันทึกการทำงาน</span></h1>
-            <div class="storage-controls">
-                <button id="btn-export" class="btn btn-outline" title="บันทึกข้อมูลเป็นไฟล์ JSON (.txt)">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                    Save File
+            <div class="storage-controls" style="display: flex; align-items: center; gap: 1rem;">
+                <span id="connected-file-name" style="font-size: 0.9rem; color: var(--text-muted); font-weight: 500;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
+                    ยังไม่เชื่อมต่อไฟล์
+                </span>
+                <button id="btn-create-file" class="btn btn-outline" title="สร้างไฟล์ใหม่บนเครื่องของคุณ" style="border-color: var(--primary); color: var(--primary);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+                    สร้างไฟล์ใหม่ (New)
                 </button>
-                <button id="btn-import" class="btn btn-outline" title="โหลดข้อมูลจากไฟล์ JSON (.txt)">
+                <button id="btn-connect-file" class="btn btn-outline" title="เปิดไฟล์เพื่ออ่านและบันทึกทับอัตโนมัติ">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                    Load File
+                    เชื่อมต่อไฟล์ (Connect)
                 </button>
-                <input type="file" id="file-input" accept=".txt" style="display: none;">
             </div>
         </header>
 
@@ -48,6 +51,27 @@
                     <span id="stat-completed" class="stat-badge completed">Completed: 0</span>
                 </div>
             </div>
+            
+            <!-- Filters -->
+            <div class="filters-container glass-panel" style="padding: 1rem; margin-bottom: 1.5rem;">
+                <div class="form-row" style="margin-bottom: 0;">
+                    <div class="form-group" style="flex: 2;">
+                        <input type="text" id="filter-text" placeholder="ค้นหาชื่องาน หรือ คีย์เวิร์ด..." class="filter-input">
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <input type="date" id="filter-date" title="กรองตามวันที่เริ่มหรือสิ้นสุด" class="filter-input">
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <select id="filter-status" class="filter-input">
+                            <option value="">ทุกสถานะ</option>
+                            <option value="Not Started">Not Started</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
             <div id="tasks-list" class="tasks-list">
                 <!-- Tasks will be rendered here dynamically -->
                 <div class="empty-state">

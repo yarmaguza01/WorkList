@@ -3,6 +3,7 @@ class TaskModal {
         this.onSave = onSave;
         this.currentKeywords = [];
         this.modalElement = null;
+        this.editTaskId = null;
         this.init();
     }
 
@@ -16,7 +17,7 @@ class TaskModal {
         this.modalElement = document.getElementById('task-modal-component');
         this.form = document.getElementById('task-form-component');
         this.btnClose = document.getElementById('btn-close-modal-component');
-        this.keywordsInput = document.getElementById('task-keywords-component');
+        this.keywordsInput = document.getElementById('task-keywords-comp');
         this.keywordsContainer = document.getElementById('keywords-container-component');
 
         this.bindEvents();
@@ -118,10 +119,9 @@ class TaskModal {
             };
 
             if (this.onSave) {
-                this.onSave(taskData);
+                this.onSave(taskData, this.editTaskId);
             }
 
-            this.reset();
             this.close();
         });
     }
@@ -152,6 +152,28 @@ class TaskModal {
     }
 
     open() {
+        this.editTaskId = null;
+        const titleEl = document.querySelector('#task-modal-component h2');
+        if (titleEl) titleEl.textContent = 'เพิ่มงานใหม่';
+        this.reset();
+        this.modalElement.classList.add('show');
+    }
+
+    openForEdit(taskData) {
+        this.editTaskId = taskData.id;
+        const titleEl = document.querySelector('#task-modal-component h2');
+        if (titleEl) titleEl.textContent = 'แก้ไขงาน';
+        
+        document.getElementById('task-title-comp').value = taskData.title;
+        document.getElementById('task-status-comp').value = taskData.status;
+        document.getElementById('task-start-date-comp').value = taskData.startDate;
+        document.getElementById('task-end-date-comp').value = taskData.endDate;
+        document.getElementById('task-deadline-time-comp').value = taskData.deadlineTime || '';
+        document.getElementById('task-notes-comp').value = taskData.notes || '';
+        
+        this.currentKeywords = taskData.keywords ? [...taskData.keywords] : [];
+        this.renderKeywords();
+        
         this.modalElement.classList.add('show');
     }
 

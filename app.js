@@ -8,22 +8,43 @@ const statProgress = document.getElementById('stat-progress');
 const statCompleted = document.getElementById('stat-completed');
 const toast = document.getElementById('toast');
 
-const btnExport = document.getElementById('btn-export');
-const btnImport = document.getElementById('btn-import');
-const fileInput = document.getElementById('file-input');
+let currentFileHandle = null;
+const btnConnectFile = document.getElementById('btn-connect-file');
+const btnCreateFile = document.getElementById('btn-create-file');
+const connectedFileName = document.getElementById('connected-file-name');
+
+btnConnectFile.addEventListener('click', connectLocalFile);
+if (btnCreateFile) btnCreateFile.addEventListener('click', createNewLocalFile);
+
+// Filter Elements
+const filterText = document.getElementById('filter-text');
+const filterDate = document.getElementById('filter-date');
+const filterStatus = document.getElementById('filter-status');
+
+[filterText, filterDate, filterStatus].forEach(el => {
+    el.addEventListener('input', renderTasks);
+});
 
 // Initialize TaskModal Component
-const taskModalComponent = new TaskModal((newTaskData) => {
-    const newTask = {
-        id: generateId(),
-        ...newTaskData,
-        createdAt: new Date().toISOString()
-    };
+const taskModalComponent = new TaskModal((taskData, editTaskId) => {
+    if (editTaskId) {
+        const index = tasks.findIndex(t => t.id === editTaskId);
+        if (index !== -1) {
+            tasks[index] = { ...tasks[index], ...taskData };
+            showToast('แก้ไขงานสำเร็จ!');
+        }
+    } else {
+        const newTask = {
+            id: generateId(),
+            ...taskData,
+            createdAt: new Date().toISOString()
+        };
+        tasks.unshift(newTask);
+        showToast('เพิ่มงานสำเร็จ!');
+    }
 
-    tasks.unshift(newTask);
     saveToLocal();
     renderTasks();
-    showToast('เพิ่มงานสำเร็จ!');
 });
 
 const btnAddTask = document.getElementById('btn-add-task');
@@ -75,10 +96,29 @@ function showToast(message, isError = false) {
 function renderTasks() {
     updateStats();
     
-    if (tasks.length === 0) {
+    // Filtering Logic
+    const textQuery = filterText.value.toLowerCase();
+    const dateQuery = filterDate.value;
+    const statusQuery = filterStatus.value;
+    
+    const filteredTasks = tasks.filter(task => {
+        const matchText = !textQuery || 
+            task.title.toLowerCase().includes(textQuery) || 
+            (task.keywords && task.keywords.some(kw => kw.toLowerCase().includes(textQuery)));
+            
+        const matchDate = !dateQuery || 
+            task.startDate === dateQuery || 
+            task.endDate === dateQuery;
+            
+        const matchStatus = !statusQuery || task.status === statusQuery;
+        
+        return matchText && matchDate && matchStatus;
+    });
+
+    if (filteredTasks.length === 0) {
         tasksList.innerHTML = `
             <div class="empty-state">
-                <p>ยังไม่มีรายการงาน เริ่มต้นด้วยการเพิ่มงานใหม่ด้านบน</p>
+                <p>${tasks.length === 0 ? 'ยังไม่มีรายการงาน เริ่มต้นด้วยการเพิ่มงานใหม่ด้านบน' : 'ไม่พบงานที่ตรงกับเงื่อนไขการค้นหา'}</p>
             </div>
         `;
         return;
@@ -86,7 +126,7 @@ function renderTasks() {
 
     tasksList.innerHTML = '';
     
-    tasks.forEach(task => {
+    filteredTasks.forEach(task => {
         const statusClass = task.status.replace(/\s+/g, '').toLowerCase();
         
         const card = document.createElement('div');
@@ -131,9 +171,14 @@ function renderTasks() {
                     <option value="In Progress" ${task.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
                     <option value="Completed" ${task.status === 'Completed' ? 'selected' : ''}>Completed</option>
                 </select>
-                <button class="btn btn-icon" onclick="deleteTask('${task.id}')" title="ลบงาน">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                </button>
+                <div style="display: flex; gap: 4px;">
+                    <button class="btn btn-icon" onclick="editTask('${task.id}')" title="แก้ไขงาน">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    </button>
+                    <button class="btn btn-icon" onclick="deleteTask('${task.id}')" title="ลบงาน">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                </div>
             </div>
         `;
         
@@ -161,6 +206,13 @@ window.updateStatus = function(id, newStatus) {
     }
 }
 
+window.editTask = function(id) {
+    const task = tasks.find(t => t.id === id);
+    if (task) {
+        taskModalComponent.openForEdit(task);
+    }
+}
+
 window.deleteTask = function(id) {
     if(confirm('คุณแน่ใจหรือไม่ว่าต้องการลบงานนี้?')) {
         tasks = tasks.filter(t => t.id !== id);
@@ -171,61 +223,116 @@ window.deleteTask = function(id) {
 }
 
 // Local Storage Fallback
-function saveToLocal() {
-    localStorage.setItem('worklist_tasks', JSON.stringify(tasks));
+async function connectLocalFile() {
+    try {
+        [currentFileHandle] = await window.showOpenFilePicker({
+            types: [
+                {
+                    description: 'WorkList Data File',
+                    accept: {
+                        'text/plain': ['.txt', '.json']
+                    }
+                }
+            ],
+            excludeAcceptAllOption: true,
+            multiple: false
+        });
+        
+        const file = await currentFileHandle.getFile();
+        const contents = await file.text();
+        
+        if (contents.trim()) {
+            try {
+                const importedData = JSON.parse(contents);
+                if (Array.isArray(importedData)) {
+                    tasks = importedData;
+                    renderTasks();
+                    showToast('เชื่อมต่อและโหลดข้อมูลสำเร็จ!');
+                } else {
+                    throw new Error("Invalid format");
+                }
+            } catch(e) {
+                console.error(e);
+                showToast('รูปแบบข้อมูลในไฟล์ไม่ถูกต้อง', true);
+                currentFileHandle = null;
+                return;
+            }
+        } else {
+            // Empty file
+            tasks = [];
+            renderTasks();
+            showToast('เชื่อมต่อไฟล์ว่างเปล่าสำเร็จ');
+        }
+        
+        updateFileStatus(file.name);
+        
+    } catch (err) {
+        if (err.name !== 'AbortError') {
+            console.error(err);
+            showToast('เกิดข้อผิดพลาดในการเชื่อมต่อไฟล์', true);
+        }
+    }
 }
 
-// Export / Import
-btnExport.addEventListener('click', () => {
-    if (tasks.length === 0) {
-        showToast('ไม่มีข้อมูลสำหรับบันทึก', true);
+async function createNewLocalFile() {
+    try {
+        currentFileHandle = await window.showSaveFilePicker({
+            suggestedName: 'worklist_data.txt',
+            types: [{
+                description: 'WorkList Data File',
+                accept: {'text/plain': ['.txt', '.json']}
+            }]
+        });
+        
+        // Initialize with empty tasks
+        tasks = [];
+        renderTasks();
+        
+        // Write empty array to the new file
+        const writable = await currentFileHandle.createWritable();
+        await writable.write(JSON.stringify(tasks, null, 2));
+        await writable.close();
+        
+        showToast('สร้างไฟล์ใหม่และเชื่อมต่อสำเร็จ!');
+        updateFileStatus(currentFileHandle.name);
+        
+    } catch (err) {
+        if (err.name !== 'AbortError') {
+            console.error(err);
+            showToast('เกิดข้อผิดพลาดในการสร้างไฟล์', true);
+        }
+    }
+}
+
+function updateFileStatus(filename) {
+    if (filename) {
+        connectedFileName.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px; color: var(--success);"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> เชื่อมต่อแล้ว: ${filename}`;
+    } else {
+        connectedFileName.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg> ยังไม่เชื่อมต่อไฟล์`;
+    }
+}
+
+async function saveToLocal() {
+    if (!currentFileHandle) {
+        // Fallback to localStorage
+        localStorage.setItem('worklist_tasks', JSON.stringify(tasks));
         return;
     }
     
-    const dataStr = JSON.stringify(tasks, null, 2);
-    const blob = new Blob([dataStr], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `worklist_backup_${new Date().toISOString().split('T')[0]}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    showToast('ดาวน์โหลดไฟล์ข้อมูลสำเร็จ');
-});
-
-btnImport.addEventListener('click', () => {
-    fileInput.click();
-});
-
-fileInput.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = function(event) {
-        try {
-            const importedData = JSON.parse(event.target.result);
-            if (Array.isArray(importedData)) {
-                tasks = importedData;
-                saveToLocal();
-                renderTasks();
-                showToast('โหลดข้อมูลสำเร็จ');
-            } else {
-                throw new Error("Invalid format");
-            }
-        } catch(error) {
-            console.error(error);
-            showToast('รูปแบบไฟล์ไม่ถูกต้อง', true);
-        }
-        // reset input
-        fileInput.value = '';
-    };
-    reader.readAsText(file);
-});
+    try {
+        const writable = await currentFileHandle.createWritable();
+        await writable.write(JSON.stringify(tasks, null, 2));
+        await writable.close();
+        
+        // Also save to localStorage as backup
+        localStorage.setItem('worklist_tasks', JSON.stringify(tasks));
+    } catch (err) {
+        console.error(err);
+        showToast('ไม่สามารถบันทึกทับไฟล์ได้ (อาจไม่ได้รับสิทธิ์)', true);
+        // Fallback
+        localStorage.setItem('worklist_tasks', JSON.stringify(tasks));
+    }
+}
 
 // Run Init
 init();
