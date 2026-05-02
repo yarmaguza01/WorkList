@@ -11,10 +11,57 @@ const toast = document.getElementById('toast');
 let currentFileHandle = null;
 const btnConnectFile = document.getElementById('btn-connect-file');
 const btnCreateFile = document.getElementById('btn-create-file');
+const btnDisconnectFile = document.getElementById('btn-disconnect-file');
 const connectedFileName = document.getElementById('connected-file-name');
 
 btnConnectFile.addEventListener('click', connectLocalFile);
 if (btnCreateFile) btnCreateFile.addEventListener('click', createNewLocalFile);
+if (btnDisconnectFile) btnDisconnectFile.addEventListener('click', disconnectFile);
+
+// ── IndexedDB: persist FileSystemFileHandle ────────────────────────────────
+const DB_NAME = 'worklist_db';
+const DB_VERSION = 1;
+const STORE_NAME = 'fileHandles';
+const HANDLE_KEY = 'default';
+
+function openDB() {
+    return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = () => req.result.createObjectStore(STORE_NAME);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+    });
+}
+
+async function saveHandle(handle) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        tx.objectStore(STORE_NAME).put(handle, HANDLE_KEY);
+        tx.oncomplete = resolve;
+        tx.onerror = () => reject(tx.error);
+    });
+}
+
+async function loadHandle() {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const req = tx.objectStore(STORE_NAME).get(HANDLE_KEY);
+        req.onsuccess = () => resolve(req.result ?? null);
+        req.onerror = () => reject(req.error);
+    });
+}
+
+async function clearHandle() {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        tx.objectStore(STORE_NAME).delete(HANDLE_KEY);
+        tx.oncomplete = resolve;
+        tx.onerror = () => reject(tx.error);
+    });
+}
 
 // Filter Elements
 const filterText = document.getElementById('filter-text');
@@ -54,16 +101,30 @@ btnAddTask.addEventListener('click', () => {
 
 
 // Initialize
-function init() {
-    // Attempt to load from localStorage as fallback
-    const saved = localStorage.getItem('worklist_tasks');
-    if (saved) {
-        try {
-            tasks = JSON.parse(saved);
-            renderTasks();
-        } catch (e) {
-            console.error("Error loading tasks", e);
+async function init() {
+    try {
+        const handle = await loadHandle();
+        if (!handle) return; // ไม่มีไฟล์ที่บันทึกไว้
+
+        // ขอ permission ใหม่ (security requirement ของ File System Access API)
+        const permission = await handle.requestPermission({ mode: 'readwrite' });
+        if (permission !== 'granted') {
+            await clearHandle();
+            return;
         }
+
+        currentFileHandle = handle;
+        const file = await handle.getFile();
+        const contents = await file.text();
+
+        if (contents.trim()) {
+            tasks = JSON.parse(contents);
+            renderTasks();
+        }
+        updateFileStatus(file.name);
+        showToast(`เชื่อมต่อ "${file.name}" อัตโนมัติ`);
+    } catch (err) {
+        console.error('Auto-connect failed:', err);
     }
 }
 
@@ -220,18 +281,14 @@ window.deleteTask = function (id) {
     }
 }
 
-// Local Storage Fallback
+// ── File Connection ────────────────────────────────────────────────────────
 async function connectLocalFile() {
     try {
         [currentFileHandle] = await window.showOpenFilePicker({
-            types: [
-                {
-                    description: 'WorkList Data File',
-                    accept: {
-                        'text/plain': ['.txt', '.json']
-                    }
-                }
-            ],
+            types: [{
+                description: 'WorkList Data File',
+                accept: { 'text/plain': ['.txt', '.json'] }
+            }],
             excludeAcceptAllOption: true,
             multiple: false
         });
@@ -247,7 +304,7 @@ async function connectLocalFile() {
                     renderTasks();
                     showToast('เชื่อมต่อและโหลดข้อมูลสำเร็จ!');
                 } else {
-                    throw new Error("Invalid format");
+                    throw new Error('Invalid format');
                 }
             } catch (e) {
                 console.error(e);
@@ -256,12 +313,12 @@ async function connectLocalFile() {
                 return;
             }
         } else {
-            // Empty file
             tasks = [];
             renderTasks();
             showToast('เชื่อมต่อไฟล์ว่างเปล่าสำเร็จ');
         }
 
+        await saveHandle(currentFileHandle);
         updateFileStatus(file.name);
 
     } catch (err) {
@@ -282,15 +339,14 @@ async function createNewLocalFile() {
             }]
         });
 
-        // Initialize with empty tasks
         tasks = [];
         renderTasks();
 
-        // Write empty array to the new file
         const writable = await currentFileHandle.createWritable();
         await writable.write(JSON.stringify(tasks, null, 2));
         await writable.close();
 
+        await saveHandle(currentFileHandle);
         showToast('สร้างไฟล์ใหม่และเชื่อมต่อสำเร็จ!');
         updateFileStatus(currentFileHandle.name);
 
@@ -302,33 +358,36 @@ async function createNewLocalFile() {
     }
 }
 
+async function disconnectFile() {
+    if (!confirm('ตัดการเชื่อมต่อไฟล์และล้างข้อมูลหน้าจอ?')) return;
+    currentFileHandle = null;
+    tasks = [];
+    await clearHandle();
+    renderTasks();
+    updateFileStatus(null);
+    showToast('ตัดการเชื่อมต่อแล้ว');
+}
+
 function updateFileStatus(filename) {
     if (filename) {
         connectedFileName.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px; color: var(--success);"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> เชื่อมต่อแล้ว: ${filename}`;
+        if (btnDisconnectFile) btnDisconnectFile.style.display = 'inline-flex';
     } else {
         connectedFileName.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg> ยังไม่เชื่อมต่อไฟล์`;
+        if (btnDisconnectFile) btnDisconnectFile.style.display = 'none';
     }
 }
 
 async function saveToLocal() {
-    if (!currentFileHandle) {
-        // Fallback to localStorage
-        localStorage.setItem('worklist_tasks', JSON.stringify(tasks));
-        return;
-    }
+    if (!currentFileHandle) return; // ไม่มีไฟล์เชื่อมต่อ ไม่บันทึก
 
     try {
         const writable = await currentFileHandle.createWritable();
         await writable.write(JSON.stringify(tasks, null, 2));
         await writable.close();
-
-        // Also save to localStorage as backup
-        localStorage.setItem('worklist_tasks', JSON.stringify(tasks));
     } catch (err) {
         console.error(err);
         showToast('ไม่สามารถบันทึกทับไฟล์ได้ (อาจไม่ได้รับสิทธิ์)', true);
-        // Fallback
-        localStorage.setItem('worklist_tasks', JSON.stringify(tasks));
     }
 }
 
