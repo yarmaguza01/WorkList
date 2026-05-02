@@ -131,10 +131,10 @@ class TaskModal {
         this.currentKeywords.forEach((kw, index) => {
             const tag = document.createElement('span');
             tag.className = 'tag';
-            tag.innerHTML = \`
-                \${kw}
-                <span class="remove-tag" data-index="\${index}">&times;</span>
-            \`;
+            tag.innerHTML = `
+                ${kw}
+                <span class="remove-tag" data-index="${index}">&times;</span>
+            `;
             
             // Add event listener to the remove button
             tag.querySelector('.remove-tag').addEventListener('click', (e) => {
