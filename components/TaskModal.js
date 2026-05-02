@@ -20,6 +20,15 @@ class TaskModal {
         this.keywordsInput = document.getElementById('task-keywords-comp');
         this.keywordsContainer = document.getElementById('keywords-container-component');
 
+        // Cache form fields
+        this.titleInput = document.getElementById('task-title-comp');
+        this.statusSelect = document.getElementById('task-status-comp');
+        this.startDateInput = document.getElementById('task-start-date-comp');
+        this.endDateInput = document.getElementById('task-end-date-comp');
+        this.deadlineTimeInput = document.getElementById('task-deadline-time-comp');
+        this.notesTextarea = document.getElementById('task-notes-comp');
+        this.modalTitle = document.querySelector('#task-modal-component h2');
+
         this.bindEvents();
     }
 
@@ -60,7 +69,7 @@ class TaskModal {
                         </div>
                         <div class="form-group">
                             <label for="task-deadline-time-comp">เวลาเดทไลน์ (Deadline Time)</label>
-                            <input type="time" id="task-deadline-time-comp" required>
+                            <input type="time" id="task-deadline-time-comp">
                         </div>
                     </div>
 
@@ -107,14 +116,14 @@ class TaskModal {
         // Form Submission
         this.form.addEventListener('submit', (e) => {
             e.preventDefault();
-            
+
             const taskData = {
-                title: document.getElementById('task-title-comp').value,
-                status: document.getElementById('task-status-comp').value,
-                startDate: document.getElementById('task-start-date-comp').value,
-                endDate: document.getElementById('task-end-date-comp').value,
-                deadlineTime: document.getElementById('task-deadline-time-comp').value,
-                notes: document.getElementById('task-notes-comp').value,
+                title: this.titleInput.value,
+                status: this.statusSelect.value,
+                startDate: this.startDateInput.value,
+                endDate: this.endDateInput.value,
+                deadlineTime: this.deadlineTimeInput.value,
+                notes: this.notesTextarea.value,
                 keywords: [...this.currentKeywords]
             };
 
@@ -135,13 +144,13 @@ class TaskModal {
                 ${kw}
                 <span class="remove-tag" data-index="${index}">&times;</span>
             `;
-            
+
             // Add event listener to the remove button
             tag.querySelector('.remove-tag').addEventListener('click', (e) => {
                 const idx = parseInt(e.target.getAttribute('data-index'), 10);
                 this.removeKeyword(idx);
             });
-            
+
             this.keywordsContainer.appendChild(tag);
         });
     }
@@ -153,27 +162,25 @@ class TaskModal {
 
     open() {
         this.editTaskId = null;
-        const titleEl = document.querySelector('#task-modal-component h2');
-        if (titleEl) titleEl.textContent = 'เพิ่มงานใหม่';
+        this.modalTitle.textContent = 'เพิ่มงานใหม่';
         this.reset();
         this.modalElement.classList.add('show');
     }
 
     openForEdit(taskData) {
         this.editTaskId = taskData.id;
-        const titleEl = document.querySelector('#task-modal-component h2');
-        if (titleEl) titleEl.textContent = 'แก้ไขงาน';
-        
-        document.getElementById('task-title-comp').value = taskData.title;
-        document.getElementById('task-status-comp').value = taskData.status;
-        document.getElementById('task-start-date-comp').value = taskData.startDate;
-        document.getElementById('task-end-date-comp').value = taskData.endDate;
-        document.getElementById('task-deadline-time-comp').value = taskData.deadlineTime || '';
-        document.getElementById('task-notes-comp').value = taskData.notes || '';
-        
+        this.modalTitle.textContent = 'แก้ไขงาน';
+
+        this.titleInput.value = taskData.title;
+        this.statusSelect.value = taskData.status;
+        this.startDateInput.value = taskData.startDate;
+        this.endDateInput.value = taskData.endDate;
+        this.deadlineTimeInput.value = taskData.deadlineTime || '';
+        this.notesTextarea.value = taskData.notes || '';
+
         this.currentKeywords = taskData.keywords ? [...taskData.keywords] : [];
         this.renderKeywords();
-        
+
         this.modalElement.classList.add('show');
     }
 

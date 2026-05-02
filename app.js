@@ -61,7 +61,7 @@ function init() {
         try {
             tasks = JSON.parse(saved);
             renderTasks();
-        } catch(e) {
+        } catch (e) {
             console.error("Error loading tasks", e);
         }
     }
@@ -74,10 +74,8 @@ function generateId() {
 
 function formatDateDisplay(dateString) {
     if (!dateString) return '';
-    const date = new Date(dateString);
-    const dd = String(date.getDate()).padStart(2, '0');
-    const mm = String(date.getMonth() + 1).padStart(2, '0'); // January is 0!
-    const yyyy = date.getFullYear();
+    // Split directly to avoid UTC→local timezone offset shifting the date
+    const [yyyy, mm, dd] = dateString.split('-');
     return `${dd}/${mm}/${yyyy}`;
 }
 
@@ -95,23 +93,23 @@ function showToast(message, isError = false) {
 // Rendering Tasks
 function renderTasks() {
     updateStats();
-    
+
     // Filtering Logic
     const textQuery = filterText.value.toLowerCase();
     const dateQuery = filterDate.value;
     const statusQuery = filterStatus.value;
-    
+
     const filteredTasks = tasks.filter(task => {
-        const matchText = !textQuery || 
-            task.title.toLowerCase().includes(textQuery) || 
+        const matchText = !textQuery ||
+            task.title.toLowerCase().includes(textQuery) ||
             (task.keywords && task.keywords.some(kw => kw.toLowerCase().includes(textQuery)));
-            
-        const matchDate = !dateQuery || 
-            task.startDate === dateQuery || 
+
+        const matchDate = !dateQuery ||
+            task.startDate === dateQuery ||
             task.endDate === dateQuery;
-            
+
         const matchStatus = !statusQuery || task.status === statusQuery;
-        
+
         return matchText && matchDate && matchStatus;
     });
 
@@ -125,15 +123,15 @@ function renderTasks() {
     }
 
     tasksList.innerHTML = '';
-    
+
     filteredTasks.forEach(task => {
         const statusClass = task.status.replace(/\s+/g, '').toLowerCase();
-        
+
         const card = document.createElement('div');
         card.className = `task-card status-${statusClass}`;
-        
+
         const dateDisplay = `${formatDateDisplay(task.startDate)} - ${formatDateDisplay(task.endDate)}`;
-        
+
         let keywordsHtml = '';
         if (task.keywords && task.keywords.length > 0) {
             keywordsHtml = `
@@ -161,7 +159,7 @@ function renderTasks() {
                     </div>
                 </div>
                 
-                ${task.notes ? `<div class="task-notes">${task.notes.replace(/\\n/g, '<br>')}</div>` : ''}
+                ${task.notes ? `<div class="task-notes">${task.notes.replace(/\n/g, '<br>')}</div>` : ''}
                 ${keywordsHtml}
             </div>
             
@@ -181,7 +179,7 @@ function renderTasks() {
                 </div>
             </div>
         `;
-        
+
         tasksList.appendChild(card);
     });
 }
@@ -190,13 +188,13 @@ function updateStats() {
     const total = tasks.length;
     const progress = tasks.filter(t => t.status === 'In Progress').length;
     const completed = tasks.filter(t => t.status === 'Completed').length;
-    
+
     statTotal.textContent = `Total: ${total}`;
     statProgress.textContent = `In Progress: ${progress}`;
     statCompleted.textContent = `Completed: ${completed}`;
 }
 
-window.updateStatus = function(id, newStatus) {
+window.updateStatus = function (id, newStatus) {
     const task = tasks.find(t => t.id === id);
     if (task) {
         task.status = newStatus;
@@ -206,15 +204,15 @@ window.updateStatus = function(id, newStatus) {
     }
 }
 
-window.editTask = function(id) {
+window.editTask = function (id) {
     const task = tasks.find(t => t.id === id);
     if (task) {
         taskModalComponent.openForEdit(task);
     }
 }
 
-window.deleteTask = function(id) {
-    if(confirm('คุณแน่ใจหรือไม่ว่าต้องการลบงานนี้?')) {
+window.deleteTask = function (id) {
+    if (confirm('คุณแน่ใจหรือไม่ว่าต้องการลบงานนี้?')) {
         tasks = tasks.filter(t => t.id !== id);
         saveToLocal();
         renderTasks();
@@ -237,10 +235,10 @@ async function connectLocalFile() {
             excludeAcceptAllOption: true,
             multiple: false
         });
-        
+
         const file = await currentFileHandle.getFile();
         const contents = await file.text();
-        
+
         if (contents.trim()) {
             try {
                 const importedData = JSON.parse(contents);
@@ -251,7 +249,7 @@ async function connectLocalFile() {
                 } else {
                     throw new Error("Invalid format");
                 }
-            } catch(e) {
+            } catch (e) {
                 console.error(e);
                 showToast('รูปแบบข้อมูลในไฟล์ไม่ถูกต้อง', true);
                 currentFileHandle = null;
@@ -263,9 +261,9 @@ async function connectLocalFile() {
             renderTasks();
             showToast('เชื่อมต่อไฟล์ว่างเปล่าสำเร็จ');
         }
-        
+
         updateFileStatus(file.name);
-        
+
     } catch (err) {
         if (err.name !== 'AbortError') {
             console.error(err);
@@ -280,22 +278,22 @@ async function createNewLocalFile() {
             suggestedName: 'worklist_data.txt',
             types: [{
                 description: 'WorkList Data File',
-                accept: {'text/plain': ['.txt', '.json']}
+                accept: { 'text/plain': ['.txt', '.json'] }
             }]
         });
-        
+
         // Initialize with empty tasks
         tasks = [];
         renderTasks();
-        
+
         // Write empty array to the new file
         const writable = await currentFileHandle.createWritable();
         await writable.write(JSON.stringify(tasks, null, 2));
         await writable.close();
-        
+
         showToast('สร้างไฟล์ใหม่และเชื่อมต่อสำเร็จ!');
         updateFileStatus(currentFileHandle.name);
-        
+
     } catch (err) {
         if (err.name !== 'AbortError') {
             console.error(err);
@@ -318,12 +316,12 @@ async function saveToLocal() {
         localStorage.setItem('worklist_tasks', JSON.stringify(tasks));
         return;
     }
-    
+
     try {
         const writable = await currentFileHandle.createWritable();
         await writable.write(JSON.stringify(tasks, null, 2));
         await writable.close();
-        
+
         // Also save to localStorage as backup
         localStorage.setItem('worklist_tasks', JSON.stringify(tasks));
     } catch (err) {
