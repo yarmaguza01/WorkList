@@ -94,6 +94,9 @@ const taskModalComponent = new TaskModal((taskData, editTaskId) => {
     renderTasks();
 });
 
+// Initialize TaskDetailPopup Component
+const taskDetailPopup = new TaskDetailPopup();
+
 const btnAddTask = document.getElementById('btn-add-task');
 btnAddTask.addEventListener('click', () => {
     taskModalComponent.open();
@@ -163,6 +166,8 @@ function renderTasks() {
     const filteredTasks = tasks.filter(task => {
         const matchText = !textQuery ||
             task.title.toLowerCase().includes(textQuery) ||
+            (task.description && task.description.toLowerCase().includes(textQuery)) ||
+            (task.notes && task.notes.toLowerCase().includes(textQuery)) ||
             (task.keywords && task.keywords.some(kw => kw.toLowerCase().includes(textQuery)));
 
         const matchDate = !dateQuery ||
@@ -190,17 +195,17 @@ function renderTasks() {
 
         const card = document.createElement('div');
         card.className = `task-card status-${statusClass}`;
+        card.dataset.taskId = task.id;
 
         const dateDisplay = `${formatDateDisplay(task.startDate)} - ${formatDateDisplay(task.endDate)}`;
 
-        let keywordsHtml = '';
-        if (task.keywords && task.keywords.length > 0) {
-            keywordsHtml = `
-                <div class="keywords-container" style="margin-top: 0.5rem">
-                    ${task.keywords.map(kw => `<span class="tag">${kw}</span>`).join('')}
-                </div>
-            `;
-        }
+        // บอกว่ามีข้อมูลอะไรบ้าง (indicator chips)
+        let indicatorsHtml = '';
+        const chips = [];
+        if (task.description && task.description.trim()) chips.push(`<span class="card-indicator"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>รายละเอียด</span>`);
+        if (task.notes && task.notes.trim()) chips.push(`<span class="card-indicator"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>หมายเหตุ</span>`);
+        if (task.keywords && task.keywords.length > 0) chips.push(`<span class="card-indicator"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>${task.keywords.length} คีย์เวิร์ด</span>`);
+        if (chips.length > 0) indicatorsHtml = `<div class="card-indicators">${chips.join('')}</div>`;
 
         card.innerHTML = `
             <div class="task-main">
@@ -219,9 +224,8 @@ function renderTasks() {
                         ${task.deadlineTime || 'ไม่ได้ระบุ'}
                     </div>
                 </div>
-                
-                ${task.notes ? `<div class="task-notes">${task.notes.replace(/\n/g, '<br>')}</div>` : ''}
-                ${keywordsHtml}
+
+                ${indicatorsHtml}
             </div>
             
             <div class="task-actions">
@@ -230,16 +234,14 @@ function renderTasks() {
                     <option value="In Progress" ${task.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
                     <option value="Completed" ${task.status === 'Completed' ? 'selected' : ''}>Completed</option>
                 </select>
-                <div style="display: flex; gap: 4px;">
-                    <button class="btn btn-icon" onclick="editTask('${task.id}')" title="แก้ไขงาน">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                    </button>
-                    <button class="btn btn-icon" onclick="deleteTask('${task.id}')" title="ลบงาน">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                    </button>
-                </div>
             </div>
         `;
+
+        // คลิกที่ card เพื่อดูรายละเอียด (ยกเว้น interactive elements)
+        card.addEventListener('click', (e) => {
+            if (e.target.closest('button, select, option, a')) return;
+            window.viewTask(task.id);
+        });
 
         tasksList.appendChild(card);
     });
@@ -262,6 +264,17 @@ window.updateStatus = function (id, newStatus) {
         saveToLocal();
         renderTasks();
         showToast(`อัปเดตสถานะเป็น ${newStatus}`);
+    }
+}
+
+window.viewTask = function (id) {
+    const task = tasks.find(t => t.id === id);
+    if (task) {
+        taskDetailPopup.open(
+            task,
+            (taskId) => window.editTask(taskId),
+            (taskId) => window.deleteTask(taskId)
+        );
     }
 }
 

@@ -23,6 +23,7 @@ class TaskModal {
         // Cache form fields
         this.titleInput = document.getElementById('task-title-comp');
         this.statusSelect = document.getElementById('task-status-comp');
+        this.descriptionTextarea = document.getElementById('task-description-comp');
         this.startDateInput = document.getElementById('task-start-date-comp');
         this.endDateInput = document.getElementById('task-end-date-comp');
         this.deadlineTimeInput = document.getElementById('task-deadline-time-comp');
@@ -67,15 +68,16 @@ class TaskModal {
                             <label for="task-end-date-comp">วันที่สิ้นสุด (End Date)</label>
                             <input type="date" id="task-end-date-comp" required>
                         </div>
-                        <div class="form-group">
-                            <label for="task-deadline-time-comp">เวลาเดทไลน์ (Deadline Time)</label>
-                            <input type="time" id="task-deadline-time-comp">
-                        </div>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="task-description-comp">รายละเอียด (Description)</label>
+                        <textarea id="task-description-comp" rows="3" placeholder="อธิบายงานโดยละเอียด..."></textarea>
                     </div>
 
                     <div class="form-group full-width">
                         <label for="task-notes-comp">หมายเหตุ (Notes)</label>
-                        <textarea id="task-notes-comp" rows="3" placeholder="รายละเอียดเพิ่มเติม..."></textarea>
+                        <textarea id="task-notes-comp" rows="2" placeholder="สิ่งที่ต้องจำ, อื่นๆ..."></textarea>
                     </div>
 
                     <div class="form-group full-width">
@@ -120,9 +122,9 @@ class TaskModal {
             const taskData = {
                 title: this.titleInput.value,
                 status: this.statusSelect.value,
+                description: this.descriptionTextarea.value,
                 startDate: this.startDateInput.value,
                 endDate: this.endDateInput.value,
-                deadlineTime: this.deadlineTimeInput.value,
                 notes: this.notesTextarea.value,
                 keywords: [...this.currentKeywords]
             };
@@ -173,9 +175,9 @@ class TaskModal {
 
         this.titleInput.value = taskData.title;
         this.statusSelect.value = taskData.status;
+        this.descriptionTextarea.value = taskData.description || '';
         this.startDateInput.value = taskData.startDate;
         this.endDateInput.value = taskData.endDate;
-        this.deadlineTimeInput.value = taskData.deadlineTime || '';
         this.notesTextarea.value = taskData.notes || '';
 
         this.currentKeywords = taskData.keywords ? [...taskData.keywords] : [];
