@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,6 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div class="background-shapes">
         <div class="shape shape-1"></div>
@@ -22,19 +24,41 @@
             <h1>WorkList <span class="subtitle">บันทึกการทำงาน</span></h1>
             <div class="storage-controls" style="display: flex; align-items: center; gap: 1rem;">
                 <span id="connected-file-name" style="font-size: 0.9rem; color: var(--text-muted); font-weight: 500;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        style="vertical-align: middle; margin-right: 4px;">
+                        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                        <polyline points="13 2 13 9 20 9"></polyline>
+                    </svg>
                     ยังไม่เชื่อมต่อไฟล์
                 </span>
-                <button id="btn-create-file" class="btn btn-outline" title="สร้างไฟล์ใหม่บนเครื่องของคุณ" style="border-color: var(--primary); color: var(--primary);">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
-                    สร้างไฟล์ใหม่ (New)
+                <button id="btn-create-file" class="btn btn-outline" title="สร้างไฟล์ใหม่บนเครื่องของคุณ"
+                    style="border-color: var(--primary); color: var(--primary);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="12" y1="18" x2="12" y2="12"></line>
+                        <line x1="9" y1="15" x2="15" y2="15"></line>
+                    </svg>
+                    เพิ่มไฟล์ใหม่ (New)
                 </button>
                 <button id="btn-connect-file" class="btn btn-outline" title="เปิดไฟล์เพื่ออ่านและบันทึกทับอัตโนมัติ">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
                     เชื่อมต่อไฟล์ (Connect)
                 </button>
-                <button id="btn-disconnect-file" class="btn btn-outline" title="ตัดการเชื่อมต่อและล้างหน้าจอ" style="display:none; border-color: var(--danger); color: var(--danger);">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                <button id="btn-disconnect-file" class="btn btn-outline" title="ตัดการเชื่อมต่อและล้างหน้าจอ"
+                    style="display:none; border-color: var(--danger); color: var(--danger);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
                     Disconnect
                 </button>
             </div>
@@ -45,8 +69,12 @@
                 <div class="header-title-row">
                     <h2>Dashboard รายการงาน</h2>
                     <button id="btn-add-task" class="btn btn-primary">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                        สร้างงานใหม่
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        เพิ่มงานใหม่
                     </button>
                 </div>
                 <div class="task-stats">
@@ -55,12 +83,13 @@
                     <span id="stat-completed" class="stat-badge completed">Completed: 0</span>
                 </div>
             </div>
-            
+
             <!-- Filters -->
             <div class="filters-container glass-panel" style="padding: 1rem; margin-bottom: 1.5rem;">
                 <div class="form-row" style="margin-bottom: 0;">
                     <div class="form-group" style="flex: 2;">
-                        <input type="text" id="filter-text" placeholder="ค้นหาชื่องาน หรือ คีย์เวิร์ด..." class="filter-input">
+                        <input type="text" id="filter-text" placeholder="ค้นหาชื่องาน หรือ คีย์เวิร์ด..."
+                            class="filter-input">
                     </div>
                     <div class="form-group" style="flex: 1;">
                         <input type="date" id="filter-date" title="กรองตามวันที่เริ่มหรือสิ้นสุด" class="filter-input">
@@ -91,4 +120,5 @@
     <script src="components/TaskDetailPopup.js"></script>
     <script src="app.js"></script>
 </body>
+
 </html>
