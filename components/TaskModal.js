@@ -22,6 +22,11 @@ class TaskModal {
 
         // Cache form fields
         this.titleInput = document.getElementById('task-title-comp');
+        this.addRepositoryFields();
+        this.ownerInput = document.getElementById('task-owner-comp');
+        this.repositoryInput = document.getElementById('task-repository-comp');
+        this.branchInput = document.getElementById('task-branch-comp');
+        this.zoneInput = document.getElementById('task-zone-comp');
         this.statusSelect = document.getElementById('task-status-comp');
         this.descriptionTextarea = document.getElementById('task-description-comp');
         this.startDateInput = document.getElementById('task-start-date-comp');
@@ -93,6 +98,31 @@ class TaskModal {
         `;
     }
 
+    addRepositoryFields() {
+        const taskNameGroup = this.titleInput.closest('.form-group');
+        const repositoryFields = document.createElement('div');
+        repositoryFields.className = 'form-row';
+        repositoryFields.innerHTML = `
+            <div class="form-group">
+                <label for="task-owner-comp">Owner</label>
+                <input type="text" id="task-owner-comp" placeholder="e.g. team-name or GitHub user">
+            </div>
+            <div class="form-group">
+                <label for="task-repository-comp">Repository</label>
+                <input type="text" id="task-repository-comp" placeholder="e.g. worklist">
+            </div>
+            <div class="form-group">
+                <label for="task-branch-comp">Branch</label>
+                <input type="text" id="task-branch-comp" placeholder="e.g. main">
+            </div>
+            <div class="form-group">
+                <label for="task-zone-comp">Zone</label>
+                <input type="text" id="task-zone-comp" placeholder="e.g. production">
+            </div>
+        `;
+        taskNameGroup.insertAdjacentElement('afterend', repositoryFields);
+    }
+
     bindEvents() {
         // Close modal
         this.btnClose.addEventListener('click', () => this.close());
@@ -119,8 +149,19 @@ class TaskModal {
         this.form.addEventListener('submit', (e) => {
             e.preventDefault();
 
+            // Include a keyword that was typed but not yet confirmed with Enter.
+            const pendingKeyword = this.keywordsInput.value.trim();
+            if (pendingKeyword && !this.currentKeywords.includes(pendingKeyword)) {
+                this.currentKeywords.push(pendingKeyword);
+            }
+            this.keywordsInput.value = '';
+
             const taskData = {
                 title: this.titleInput.value,
+                owner: this.ownerInput.value.trim(),
+                repository: this.repositoryInput.value.trim(),
+                branch: this.branchInput.value.trim(),
+                zone: this.zoneInput.value.trim(),
                 status: this.statusSelect.value,
                 description: this.descriptionTextarea.value,
                 startDate: this.startDateInput.value,
@@ -174,6 +215,10 @@ class TaskModal {
         this.modalTitle.textContent = 'แก้ไขงาน';
 
         this.titleInput.value = taskData.title;
+        this.ownerInput.value = taskData.owner || '';
+        this.repositoryInput.value = taskData.repository || '';
+        this.branchInput.value = taskData.branch || '';
+        this.zoneInput.value = taskData.zone || '';
         this.statusSelect.value = taskData.status;
         this.descriptionTextarea.value = taskData.description || '';
         this.startDateInput.value = taskData.startDate;

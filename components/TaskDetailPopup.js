@@ -72,6 +72,34 @@ class TaskDetailPopup {
                             <div id="detail-end-date" class="detail-meta-value"></div>
                         </div>
                     </div>
+                    <div id="detail-owner-card" class="detail-meta-card" style="display:none;">
+                        <div class="detail-meta-icon detail-meta-icon--orange">O</div>
+                        <div>
+                            <div class="detail-meta-label">Owner</div>
+                            <div id="detail-owner" class="detail-meta-value"></div>
+                        </div>
+                    </div>
+                    <div id="detail-repository-card" class="detail-meta-card" style="display:none;">
+                        <div class="detail-meta-icon detail-meta-icon--green">R</div>
+                        <div>
+                            <div class="detail-meta-label">Repository</div>
+                            <div id="detail-repository" class="detail-meta-value"></div>
+                        </div>
+                    </div>
+                    <div id="detail-branch-card" class="detail-meta-card" style="display:none;">
+                        <div class="detail-meta-icon detail-meta-icon--purple">B</div>
+                        <div>
+                            <div class="detail-meta-label">Branch</div>
+                            <div id="detail-branch" class="detail-meta-value"></div>
+                        </div>
+                    </div>
+                    <div id="detail-zone-card" class="detail-meta-card" style="display:none;">
+                        <div class="detail-meta-icon detail-meta-icon--blue">Z</div>
+                        <div>
+                            <div class="detail-meta-label">Zone</div>
+                            <div id="detail-zone" class="detail-meta-value"></div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Duration Bar -->
@@ -204,6 +232,12 @@ class TaskDetailPopup {
         // Dates
         document.getElementById('detail-start-date').textContent = this._formatDate(task.startDate);
         document.getElementById('detail-end-date').textContent = this._formatDate(task.endDate);
+
+        ['owner', 'repository', 'branch', 'zone'].forEach(field => {
+            const value = task[field] ? task[field].trim() : '';
+            document.getElementById(`detail-${field}`).textContent = value;
+            document.getElementById(`detail-${field}-card`).style.display = value ? '' : 'none';
+        });
 
         // Duration bar
         const dur = this._calcDuration(task.startDate, task.endDate);

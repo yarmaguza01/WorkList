@@ -450,6 +450,17 @@ option {
     font-weight: 600;
 }
 
+.zone-badge {
+    padding: 0.2rem 0.6rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--primary);
+    background: rgba(139, 92, 246, 0.12);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    white-space: nowrap;
+}
+
 .status-badge {
     padding: 0.2rem 0.6rem;
     border-radius: var(--radius-sm);

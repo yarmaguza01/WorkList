@@ -207,11 +207,24 @@ function renderTasks() {
         if (task.keywords && task.keywords.length > 0) chips.push(`<span class="card-indicator"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>${task.keywords.length} คีย์เวิร์ด</span>`);
         if (chips.length > 0) indicatorsHtml = `<div class="card-indicators">${chips.join('')}</div>`;
 
+        const repositoryMeta = [
+            ['Owner', task.owner],
+            ['Repository', task.repository],
+            ['Branch', task.branch]
+        ]
+            .filter(([, value]) => value && value.trim())
+            .map(([label, value]) => `<div class="meta-item"><strong>${label}:</strong> ${value}</div>`)
+            .join('');
+        const zoneBadge = task.zone && task.zone.trim()
+            ? `<span class="zone-badge">${task.zone}</span>`
+            : '';
+
         card.innerHTML = `
             <div class="task-main">
                 <div class="task-title-row">
                     <div class="task-title">${task.title}</div>
                     <div class="status-badge">${task.status}</div>
+                    ${zoneBadge}
                 </div>
                 
                 <div class="task-meta">
@@ -225,6 +238,7 @@ function renderTasks() {
                     </div>
                 </div>
 
+                ${repositoryMeta ? `<div class="task-meta task-repository-meta">${repositoryMeta}</div>` : ''}
                 ${indicatorsHtml}
             </div>
             
