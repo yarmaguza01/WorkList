@@ -168,6 +168,7 @@ function renderTasks() {
             task.title.toLowerCase().includes(textQuery) ||
             (task.description && task.description.toLowerCase().includes(textQuery)) ||
             (task.notes && task.notes.toLowerCase().includes(textQuery)) ||
+            (task.zone && task.zone.toLowerCase().includes(textQuery)) ||
             (task.keywords && task.keywords.some(kw => kw.toLowerCase().includes(textQuery)));
 
         const matchDate = !dateQuery ||
