@@ -9,6 +9,7 @@ const statCompleted = document.getElementById('stat-completed');
 const toast = document.getElementById('toast');
 
 let currentFileHandle = null;
+let saveQueue = Promise.resolve();
 const btnConnectFile = document.getElementById('btn-connect-file');
 const btnCreateFile = document.getElementById('btn-create-file');
 const btnDisconnectFile = document.getElementById('btn-disconnect-file');
@@ -65,12 +66,13 @@ async function clearHandle() {
 
 // Filter Elements
 const filterText = document.getElementById('filter-text');
-const filterDate = document.getElementById('filter-date');
+const filterField = document.getElementById('filter-field');
 const filterStatus = document.getElementById('filter-status');
 
-[filterText, filterDate, filterStatus].forEach(el => {
+[filterText, filterField, filterStatus].forEach(el => {
     el.addEventListener('input', renderTasks);
 });
+filterField.addEventListener('change', renderTasks);
 
 // Initialize TaskModal Component
 const taskModalComponent = new TaskModal((taskData, editTaskId) => {
@@ -160,24 +162,29 @@ function renderTasks() {
 
     // Filtering Logic
     const textQuery = filterText.value.toLowerCase();
-    const dateQuery = filterDate.value;
+    const fieldQuery = filterField.value;
     const statusQuery = filterStatus.value;
 
     const filteredTasks = tasks.filter(task => {
-        const matchText = !textQuery ||
-            task.title.toLowerCase().includes(textQuery) ||
-            (task.description && task.description.toLowerCase().includes(textQuery)) ||
-            (task.notes && task.notes.toLowerCase().includes(textQuery)) ||
-            (task.zone && task.zone.toLowerCase().includes(textQuery)) ||
-            (task.keywords && task.keywords.some(kw => kw.toLowerCase().includes(textQuery)));
-
-        const matchDate = !dateQuery ||
-            task.startDate === dateQuery ||
-            task.endDate === dateQuery;
+        const searchableValue = fieldQuery === 'all'
+            ? [
+                task.title,
+                task.owner,
+                task.repository,
+                task.branch,
+                task.zone,
+                task.description,
+                task.notes,
+                ...(task.keywords || [])
+            ].filter(Boolean).join(' ')
+            : fieldQuery === 'keywords'
+                ? (task.keywords || []).join(' ')
+                : (task[fieldQuery] || '');
+        const matchText = !textQuery || searchableValue.toLowerCase().includes(textQuery);
 
         const matchStatus = !statusQuery || task.status === statusQuery;
 
-        return matchText && matchDate && matchStatus;
+        return matchText && matchStatus;
     });
 
     if (filteredTasks.length === 0) {
@@ -232,10 +239,6 @@ function renderTasks() {
                     <div class="meta-item" title="ระยะเวลา">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                         ${dateDisplay}
-                    </div>
-                    <div class="meta-item" title="เดทไลน์เวลา">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                        ${task.deadlineTime || 'ไม่ได้ระบุ'}
                     </div>
                 </div>
 
@@ -406,17 +409,25 @@ function updateFileStatus(filename) {
     }
 }
 
-async function saveToLocal() {
-    if (!currentFileHandle) return; // ไม่มีไฟล์เชื่อมต่อ ไม่บันทึก
+function saveToLocal() {
+    if (!currentFileHandle) return Promise.resolve();
 
-    try {
-        const writable = await currentFileHandle.createWritable();
-        await writable.write(JSON.stringify(tasks, null, 2));
+    // Capture the data and file at the time of the change, then write changes in order.
+    const fileHandle = currentFileHandle;
+    const contents = JSON.stringify(tasks, null, 2);
+    const writeOperation = saveQueue.then(async () => {
+        const writable = await fileHandle.createWritable();
+        await writable.write(contents);
         await writable.close();
-    } catch (err) {
+    });
+
+    // Keep the queue usable after a failed write, while reporting the failure to the user.
+    saveQueue = writeOperation.catch(err => {
         console.error(err);
         showToast('ไม่สามารถบันทึกทับไฟล์ได้ (อาจไม่ได้รับสิทธิ์)', true);
-    }
+    });
+
+    return writeOperation;
 }
 
 // Run Init

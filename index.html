@@ -92,7 +92,17 @@
                             class="filter-input">
                     </div>
                     <div class="form-group" style="flex: 1;">
-                        <input type="date" id="filter-date" title="กรองตามวันที่เริ่มหรือสิ้นสุด" class="filter-input">
+                        <select id="filter-field" class="filter-input" title="Search field">
+                            <option value="all" selected>All fields</option>
+                            <option value="title">Title</option>
+                            <option value="owner">Owner</option>
+                            <option value="repository">Repository</option>
+                            <option value="branch">Branch</option>
+                            <option value="zone">Zone</option>
+                            <option value="description">Description</option>
+                            <option value="notes">Notes</option>
+                            <option value="keywords">Keywords</option>
+                        </select>
                     </div>
                     <div class="form-group" style="flex: 1;">
                         <select id="filter-status" class="filter-input">

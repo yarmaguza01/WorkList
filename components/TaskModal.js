@@ -31,7 +31,6 @@ class TaskModal {
         this.descriptionTextarea = document.getElementById('task-description-comp');
         this.startDateInput = document.getElementById('task-start-date-comp');
         this.endDateInput = document.getElementById('task-end-date-comp');
-        this.deadlineTimeInput = document.getElementById('task-deadline-time-comp');
         this.notesTextarea = document.getElementById('task-notes-comp');
         this.modalTitle = document.querySelector('#task-modal-component h2');
 
